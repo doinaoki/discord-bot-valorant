@@ -1,5 +1,7 @@
 package com.discord.samplebot;
 
+import java.util.List;
+
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -18,6 +20,7 @@ public class DiscordBot extends ListenerAdapter {
 	private static final String BOT_TOKEN = dotenv.get("DISCORD_API");
 	private static final String GUILD_ID = dotenv.get("GUILD_ID");
 	private static final String MODE = "dev";
+	private static final Member members = new Member();
 
 	public static void main(String[] args) {
 		jda = JDABuilder.createDefault(BOT_TOKEN)
@@ -73,17 +76,25 @@ public class DiscordBot extends ListenerAdapter {
 	//コマンドの反応メソッド
 	@Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+		String replyString = "";
 		if (event.getName().equals("register")) {
-			event.reply(event.getOption("username").getAsString()).queue();
+			if (members.register(event.getOption("username").getAsString())) replyString = "登録完了";
+			else replyString = "登録失敗";
 			System.out.print("register");
 		} 
 		else if (event.getName().equals("delete")) {
-			event.reply(event.getOption("username").getAsString()).queue();
+			if (members.remove(event.getOption("username").getAsString())) replyString = "消去完了";
+			else replyString = "消去失敗";
 			System.out.print("delete");
 		}
 		else if (event.getName().equals("show")) {
-			event.reply("member").setEphemeral(false).queue();
+			List<String> memberList = members.getMembers();
+			replyString = "メンバーリスト\n" + String.join("\n", memberList);
 			System.out.print("show");
 		}
+		else { 
+			replyString = "該当するコマンドがありません";
+		}
+		event.reply(replyString).queue();
 	}
 }
